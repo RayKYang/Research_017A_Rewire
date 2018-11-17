@@ -1,4 +1,4 @@
-# last run: 11.12.2018
+# last run: 11.15.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))
@@ -10,7 +10,7 @@ names(al_raw) <- stringr::str_replace_all(names(al_raw), "-.| ", ".")
 Al_Network <- dplyr::select(al_raw, c("Alliance.Date.Announced", "Deal.Number", "Ultimate.Parent.CUSIP", "Parti..CUSIP"))
 rm(al_raw)
 
-### 2.1 convert firm data to allinace pairs #####
+### 2.1 convert raw data to allinace pairs #####
 Al_Nw_splitted <- split(Al_Network, Al_Network$Deal.Number)
 extract.pairs <- function(test){
   # test <- Al_Network[which(nchar(Al_Network$Ultimate.Parent.CUSIP) > 13)[1],] # test <- Al_Network[1,]
@@ -21,28 +21,27 @@ extract.pairs <- function(test){
   year.vec <- rep(unique(test$Alliance.Date.Announced), nrow(pairs)) %>% data.frame(stringsAsFactors = FALSE)
   Deal.Number <- rep(unique(test$Deal.Number), nrow(pairs)) %>% data.frame(stringsAsFactors = FALSE)
   result <- cbind(pairs, pairs_UP, year.vec, Deal.Number)
-  names(result)[5:6] <- c("Date", "Deal.Number")
+  names(result)[5:6] <- c("Ali_Ann_Date", "Deal.Number")
   names(result)[3:4] <- paste0(names(result)[3:4], "_UP")
   return(result)}
 pair_year_list <- purrr::map(Al_Nw_splitted, safely(extract.pairs))
 which_is_wrong <- which(unlist(map(pair_year_list, function(x){!is_null(x$error)})) == TRUE)
 pair_year_list_OK <- purrr::map(pair_year_list[-which_is_wrong], function(list){list$result})
 pair_year <- do.call(rbind, pair_year_list_OK) %>% as.data.frame()
-pair_year$year     <- lubridate::year(pair_year$Date)
-pair_year$Date <- NULL
+pair_year$Ali_Expiration_Date <- as.Date(pair_year$Ali_Ann_Date) + 365*4
 
-### 2.2 pad n_year rolling data #####
-pair_year_splitted <- split(pair_year, pair_year$year)
-pad_n_year <- function(test, n.year = 5){
-  # test <- pair_year_splitted[[3]]
-  test.rep <- test[rep(row.names(test), n.year),]
-  test.rep$year <- rep(test$year[1]:(test$year[1]+n.year-1), each=nrow(test))
-  test.rep$stats <- c(rep("ini_", nrow(test)), rep("rolling", nrow(test) * (n.year - 1))) # this should be "status": initial vs. rolling
-  return(test.rep)
-}
-pair_n_year <- do.call(rbind, purrr::map(pair_year_splitted, pad_n_year))
-pair_n_year <- pair_n_year[-which(duplicated(pair_n_year[, c("X1", "X2", "year")])),]
-pair_n_year <- pair_n_year %>% arrange(Deal.Number, year)
+### 2.2 pad n_year rolling data by year #####
+# pair_year_splitted <- split(pair_year, pair_year$year)
+# pad_n_year <- function(test, n.year = 5){
+#   # test <- pair_year_splitted[[3]]
+#   test.rep <- test[rep(row.names(test), n.year),]
+#   test.rep$year <- rep(test$year[1]:(test$year[1]+n.year-1), each=nrow(test))
+#   test.rep$stats <- c(rep("ini_", nrow(test)), rep("rolling", nrow(test) * (n.year - 1))) # this should be "status": initial vs. rolling
+#   return(test.rep)
+# }
+# pair_n_year <- do.call(rbind, purrr::map(pair_year_splitted, pad_n_year))
+# pair_n_year <- pair_n_year[-which(duplicated(pair_n_year[, c("X1", "X2", "year")])),]
+# write.csv(pair_n_year, "pair_n_year_before_MnA.csv", row.names = FALSE)
 
 ###############################################################################################
 # centrality # template #                                                                     #
