@@ -53,19 +53,19 @@ pair_year$Ali_Expiration_Date <- as.Date(pair_year$Ali_Ann_Date) + 365*4
 ###############################################################################################
 
 ### 2.3 centrality measures (without considering acquisitions) by year #####
-pair_n_year_splitted <- split(pair_n_year, pair_n_year$year)
-centrality <- function(test){
-  # test <- pair_n_year_splitted[[26]]
-  a <- test[, 1:2]
-  vec <- c(t(a))
-  g <- igraph::make_graph(vec, directed = F) %>% igraph::simplify()
-  return(data.frame(year=test$year[1],
-                    cusipAup = names(igraph::constraint(g)),
-                    eigen=igraph::eigen_centrality(g)$vector,
-                    constraint=igraph::constraint(g)))
-}
-centrality_alli_nwk <- do.call(rbind, purrr::map(pair_n_year_splitted, centrality))
-centrality_alli_nwk <- centrality_alli_nwk[which(centrality_alli_nwk$year < 2016),]
+# pair_n_year_splitted <- split(pair_n_year, pair_n_year$year)
+# centrality <- function(test){
+#   # test <- pair_n_year_splitted[[26]]
+#   a <- test[, 1:2]
+#   vec <- c(t(a))
+#   g <- igraph::make_graph(vec, directed = F) %>% igraph::simplify()
+#   return(data.frame(year=test$year[1],
+#                     cusipAup = names(igraph::constraint(g)),
+#                     eigen=igraph::eigen_centrality(g)$vector,
+#                     constraint=igraph::constraint(g)))
+# }
+# centrality_alli_nwk <- do.call(rbind, purrr::map(pair_n_year_splitted, centrality))
+# centrality_alli_nwk <- centrality_alli_nwk[which(centrality_alli_nwk$year < 2016),]
 
 ### save data ##### 
-write.csv(centrality_alli_nwk, "centrality_017A.csv", row.names = FALSE)
+# write.csv(centrality_alli_nwk, "centrality_017A.csv", row.names = FALSE)

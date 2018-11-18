@@ -87,9 +87,9 @@ pair_year_updated <- rbind(pair_year_unaffected, updated_blocks)
 cat(scales::percent(sum(pair_year_updated$MnA_adjusted)/2/nrow(pair_year), accuracy = 0.01), "pairs in alliance network got affected by MnA") #11.07% 
 
 # 2 Acquisition's Impact on Alliance Network #
-
+impacting.MnAs$event_number <- paste0("MnA_", 1:nrow(impacting.MnAs))
 add_centrality_change <- function(row_){
-# row_ <- 8 # test
+# row_ <- 2 # test
 df <- impacting.MnAs[row_, ]
 target <- df$target.cusip
 pre_event.date <- as.Date(df$date_ann - 1)
@@ -119,6 +119,8 @@ centrality <- function(test){
 pre_centrality <- centrality(pre_Ali_Pairs)
 pos_centrality <- centrality(pos_Ali_Pairs)
 names(pre_centrality)[2:4] <- paste0("pre_", names(pre_centrality)[2:4])
+
+# delta centrality #
 merged_ <- merge(pre_centrality, pos_centrality, by = "cusipAup")
 merged_$pre_btwness <- regrrr::scale_01(merged_$pre_btwness)
 merged_$btwness <- regrrr::scale_01(merged_$btwness)
@@ -126,10 +128,12 @@ merged_$delta_eigen <- merged_$eigen - merged_$pre_eigen
 merged_$delta_btwness <- merged_$btwness - merged_$pre_btwness
 merged_$delta_strhole <- merged_$pre_constraint - merged_$constraint
 merged_ <- merged_ %>% dplyr::select(cusipAup, delta_eigen, delta_btwness, delta_strhole)
-merged_ <- 
-return()}
+merged_ <- merged_ %>% dplyr::filter(abs(delta_eigen) > 0.001 | abs(delta_btwness) > 0.001 | abs(delta_strhole) > 0.001)
+if(nrow(merged_) > 0){merged_$event_number <- df$event_number}
+return(merged_)}
+start <- Sys.time()
+impacting.MnAs_centrality_change <- do.call(rbind, purrr::map(1:nrow(impacting.MnAs), add_centrality_change))
+Sys.time() - start
 
-impacting.MnAs_centrality_change <- purrr::map(1:nrow(impacting.MnAs), add_centrality_change)
-
-
-
+Acq_Ali_Merged <- merge(impacting.MnAs_centrality_change, impacting.MnAs, by = "event_number")
+write.csv(Acq_Ali_Merged, "Acq_Ali_Merged.csv", row.names = FALSE)

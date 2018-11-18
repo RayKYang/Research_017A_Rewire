@@ -1,17 +1,19 @@
-# last run: 11.12.2018
+# last run: 11.17.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))
 
 ###### 1 get stock price data ########
-### 1.1 read in raw data #####
-ACQ_raw <- readxl::read_xls("017MnA_11052018.xls", skip = 1) %>% as.data.frame()
-names(ACQ_raw) <- stringr::str_replace_all(names(ACQ_raw), "\n", ".")
-names(ACQ_raw) <- stringr::str_replace_all(names(ACQ_raw), "-.| ", ".")
-ACQ_raw <- ACQ_raw %>% filter( `%.of.Shares.Acq.` == 100)
-MnA <- ACQ_raw[, c("Acquiror.Ultimate..Parent..CUSIP","Target.Ultimate..Parent..CUSIP","Date.Announced","Date.Effective")]
-names(MnA) <- c("acquirer.cusip", "target.cusip", "date_ann", "date_eff")
-rm(ACQ_raw)
+# ### 1.1 read in raw data #####
+# ACQ_raw <- readxl::read_xls("017MnA_11052018.xls", skip = 1) %>% as.data.frame()
+# names(ACQ_raw) <- stringr::str_replace_all(names(ACQ_raw), "\n", ".")
+# names(ACQ_raw) <- stringr::str_replace_all(names(ACQ_raw), "-.| ", ".")
+# ACQ_raw <- ACQ_raw %>% filter( `%.of.Shares.Acq.` == 100)
+# MnA <- ACQ_raw[, c("Acquiror.Ultimate..Parent..CUSIP","Target.Ultimate..Parent..CUSIP","Date.Announced","Date.Effective")]
+# names(MnA) <- c("acquirer.cusip", "target.cusip", "date_ann", "date_eff")
+# rm(ACQ_raw)
+
+MnA <- read.csv("Acq_Ali_Merged.csv", stringsAsFactors = FALSE)
 
 ### 1.2 "Convert 6 digit CUSIPs to 8 or 9 digit CUSIPs" http://faq.library.princeton.edu/econ/faq/11206 ####
 pad.6digit <- function(str){ifelse(nchar(str)<6, stringr::str_pad(str, width=6, side="left", pad="0"),str)} # pad 0's to the left
