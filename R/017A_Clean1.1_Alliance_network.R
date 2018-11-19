@@ -1,4 +1,4 @@
-# last run: 11.15.2018
+# last run: 11.18.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))

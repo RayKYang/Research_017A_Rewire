@@ -14,17 +14,17 @@ regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr"
 # rm(ACQ_raw)
 
 MnA <- read.csv("Acq_Ali_Merged.csv", stringsAsFactors = FALSE)
+MnA <- MnA %>% filter(year >= 1988, year <= 2017)
 
 ### 1.2 "Convert 6 digit CUSIPs to 8 or 9 digit CUSIPs" http://faq.library.princeton.edu/econ/faq/11206 ####
 pad.6digit <- function(str){ifelse(nchar(str)<6, stringr::str_pad(str, width=6, side="left", pad="0"),str)} # pad 0's to the left
-MnA$target.cusip10   <- paste(pad.6digit(MnA$target.cusip),"10",sep="")
-MnA$acquirer.cusip10 <- paste(pad.6digit(MnA$acquirer.cusip),"10",sep="")
+MnA$cusipAup_10 <-  paste0(pad.6digit(MnA$cusipAup), "10")
 MnA$date_ann <- lubridate::ymd(MnA$date_ann)
 MnA$date_eff <- lubridate::ymd(MnA$date_eff)
-print(paste("MnA has",length(unique(MnA$acquirer.cusip)),"unique firms"))
+print(paste("MnA has", length(unique(MnA$cusipAup)),"unique firms"))
 
 ## 1.3: download return data #####
-go.to.crsp <- unique(MnA$acquirer.cusip10) # use this file to download daily stock return
+go.to.crsp <- unique(MnA$cusipAup_10) # use this file to download daily stock return
 # write.table(go.to.crsp,"go.to.crsp.txt", col.names = FALSE) # use { =LEFT(RIGHT(A1,9),8) } in excel. set to text, then paste
 # CRSP -> Stock / Security Files -> Daily Stock File -> Date Range {1989-01-01 to 2018-06-30} -> holding period return + return on S&P
 # download done ###
@@ -32,7 +32,7 @@ go.to.crsp <- unique(MnA$acquirer.cusip10) # use this file to download daily sto
 ###### 2 prepare stock price file  ######
 # 2.1 read in stock price file 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
-daily.rt <- fread("stock_price_017A.11122018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
+daily.rt <- fread("stock_price_017A.11182018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
 daily.rt <- daily.rt %>% dplyr::select(PERMNO, date, CUSIP, RET, sprtrn)
  print(paste("daily.rt has",length(unique(daily.rt$CUSIP)),"unique firms"))
   daily.rt$date <- ymd(daily.rt$date)
@@ -66,7 +66,7 @@ convert <- function(x){as.numeric(as.character(x))} # convert factor into numeri
 new <- as.data.frame(apply(new, 2, convert)) # first 3 cols: "date"  "tb3m"  "sp500" see data(daEsa) in library(erer)
 
 ### event file: for matting the (3 Calculate CAR) result ###
-MnA$CUSIP <- paste("RET", MnA$acquirer.cusip10, sep=".")
+MnA$CUSIP <- paste("RET", MnA$cusipAup_10, sep=".")
 MnA$DATE <- stringr::str_replace_all(MnA$date_ann,"-",replacement = "")
 
 ### 3.1 Calculate CAR #####  
@@ -146,14 +146,19 @@ run <- purrr::map(event.acquirer.list, safely(get.car)) # got error when private
  bad  <- which(map_lgl(res, is_null))
 result <- do.call(rbind, good)
 car.file <- result[-which(duplicated(result[,3:8])),]
-dim(car.file) # == 1703
+dim(car.file) # == 9466
 if(sum(duplicated(car.file[,1:2]))==0){print("good")}
 Sys.time() - start # 11 mins
 
-# 3.2 mating back
-car.file <- merge(MnA, car.file, by = c("CUSIP", "DATE"))
-car.file$acquirer.cusip <- unlist(map(car.file$acquirer.cusip10, function(x) substr(x, 1, 6)))
-car.file <- car.file[-which(duplicated(car.file[,c("acquirer.cusip", "date_ann")])),] %>% select(-c(1,2))
+# 3.2 matching back
+car.file <- merge(car.file, MnA, by = c("CUSIP", "DATE"))
+if(sum(duplicated(car.file[,c("CUSIP", "DATE")])) > 0){
+car.file <- car.file[-which(duplicated(car.file[,c("CUSIP", "DATE")])),] %>% select(-c(1,2))}
 ### this is the end ###
+
+car.file$Acquirer.Flag <- ifelse(car.file$acquirer.cusip_UP == car.file$cusipAup, 1, 0)
+summary(lm(window3 ~ (delta_eigen + delta_strhole), data = car.file[which(car.file$Acquirer.Flag == 1),]))
+summary(lm(window3 ~ (delta_eigen + delta_strhole) * Acquirer.Flag, data = car.file))
+summary(lm(window3 ~ (delta_strhole) * Acquirer.Flag, data = car.file))
 
 write.csv(car.file, "car.file.017A.csv", row.names = FALSE)
