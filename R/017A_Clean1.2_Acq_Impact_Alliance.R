@@ -1,4 +1,4 @@
-# last run: 11.18.2018
+# last run: 11.20.2018
 
 # 0.1 run 017A_Clean1.1 1~2.1 to get pair_n_year #####
 head(pair_year)
@@ -160,7 +160,8 @@ merged_$delta_strhole <- merged_$pre_constraint - merged_$constraint
 merged_$delta_spath2acquir <- merged_$shortest.path.to.acquir - merged_$pre_shortest.path.to.acquir
 merged_$delta_spath2target <- merged_$shortest.path.to.target - merged_$pre_shortest.path.to.target
 
-merged_ <- merged_ %>% dplyr::select(cusipAup, delta_degree, delta_eigen, delta_btwness, delta_strhole, 
+merged_ <- merged_ %>% dplyr::select(cusipAup, pre_degree, pre_btwness, pre_eigen, pre_constraint,
+                                     delta_degree, delta_eigen, delta_btwness, delta_strhole, 
                                      shortest.path.to.acquir, pre_shortest.path.to.acquir,
                                      shortest.path.to.target, pre_shortest.path.to.target,
                                      delta_spath2acquir, delta_spath2target, pre_shortest.path_acquir_to_target)
@@ -173,7 +174,7 @@ start <- Sys.time()
 # result_list <- purrr::map(1:nrow(impacting.MnAs), safely(add_centrality_change))
 # which(unlist(purrr::map(result_list, function(x) !is.null(x$error))))
 impacting.MnAs_centrality_change <- do.call(rbind, purrr::map(1:nrow(impacting.MnAs), add_centrality_change))
-Sys.time() - start # 5 mins
+Sys.time() - start # 3 mins
 
 Acq_Ali_Merged <- merge(impacting.MnAs_centrality_change, impacting.MnAs, by = "event_number")
 write.csv(Acq_Ali_Merged, "Acq_Ali_Merged.csv", row.names = FALSE)

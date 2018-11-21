@@ -7,6 +7,12 @@ regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr"
 al_raw <- readxl::read_xls("017Alliance_11052018.xls", skip = 1) %>% as.data.frame()
 names(al_raw) <- stringr::str_replace_all(names(al_raw), "\n", ".")
 names(al_raw) <- stringr::str_replace_all(names(al_raw), "-.| ", ".")
+al_info <- readxl::read_xlsx("017Alliance_11192018.xlsx", skip = 1) %>% as.data.frame()
+names(al_info) <- stringr::str_replace_all(names(al_info), "\r|\n", ".")
+names(al_info) <- stringr::str_replace_all(names(al_info), "-.| ", ".")
+al_info <- al_info %>% dplyr::select(Deal..Number, Status)
+al_raw <- merge(al_raw, al_info, by.x = "Deal.Number", by.y = "Deal..Number")
+al_raw <- al_raw %>% dplyr::filter(!Status %in% c("Expired", "Rumor", "Terminated", "Seeking to form", "Letter of Intent"))
 Al_Network <- dplyr::select(al_raw, c("Alliance.Date.Announced", "Deal.Number", "Ultimate.Parent.CUSIP", "Parti..CUSIP"))
 rm(al_raw)
 
