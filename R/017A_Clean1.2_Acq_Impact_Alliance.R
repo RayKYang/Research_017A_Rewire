@@ -1,4 +1,4 @@
-# last run: 11.20.2018
+# last run: 11.25.2018
 
 # 0.1 run 017A_Clean1.1 1~2.1 to get pair_n_year #####
 head(pair_year)
@@ -92,89 +92,25 @@ pair_year_unaffected$MnA_adjusted <- FALSE
 pair_year_updated <- rbind(pair_year_unaffected, updated_blocks)
 cat(scales::percent(sum(pair_year_updated$MnA_adjusted)/2/nrow(pair_year), accuracy = 0.01), "pairs in alliance network got affected by MnA") #11.07% 
 
+rm(pair_year_unaffected)
+rm(updated_blocks)
+rm(pair_year)
+
+################################################
 ### 2 Acquisition's Impact on Alliance Network #
 impacting.MnAs$event_number <- paste0("MnA_", 1:nrow(impacting.MnAs))
-add_centrality_change <- function(row_){
-# row_ <- 127 # test
-df <- impacting.MnAs[row_, ]
-acquir_UP <- df$acquirer.cusip_UP
-target_UP <- df$target.cusip_UP
-pre_event.date <- as.Date(df$date_ann - 1)
-event.date <- as.Date(df$date_ann)
-
-# for test 
-# pair_year_updated[which(pair_year_updated$Ali_Ann_Date == event.date),]
-# pair_year_updated[which(pair_year_updated$Ali_Expiration_Date == pre_event.date),]
-# pair_test <- rbind(pair_year_updated[which(pair_year_updated$Ali_Ann_Date == event.date),], pair_year_updated[which(pair_year_updated$Ali_Expiration_Date == pre_event.date),])
-# pair_test[which(pair_test$Ali_Ann_Date <= pre_event.date & pair_test$Ali_Expiration_Date >= pre_event.date), ]
-# pair_test[which(pair_test$Ali_Ann_Date <= event.date     & pair_test$Ali_Expiration_Date >= event.date    ), ]
-
-pre_Ali_Pairs <- pair_year_updated[which(pair_year_updated$Ali_Ann_Date <= pre_event.date & pair_year_updated$Ali_Expiration_Date >= pre_event.date), ]
-pos_Ali_Pairs <- pair_year_updated[which(pair_year_updated$Ali_Ann_Date <= event.date     & pair_year_updated$Ali_Expiration_Date >= event.date    ), ]
-
-centrality <- function(test){
-  # test <- pre_Ali_Pairs
-  a <- test[, c("X1_UP", "X2_UP")]
-  vec <- c(t(a))
-  g <- igraph::make_graph(vec, directed = F) %>% igraph::simplify()
-  return(data.frame(cusipAup = names(igraph::V(g)),
-                    degree=igraph::degree(g),
-                    eigen=igraph::eigen_centrality(g)$vector,
-                    btwness=igraph::betweenness(g),
-                    constraint=igraph::constraint(g),
-                    shortest.path.to.acquir = if(sum(names(igraph::V(g)) == acquir_UP) == 0){rep(Inf, length(names(igraph::V(g))))}else{
-                                              as.vector(igraph::shortest.paths(g, v = which(names(igraph::V(g)) == acquir_UP)))},
-                    shortest.path.to.target = if(sum(names(igraph::V(g)) == target_UP) == 0){rep(Inf, length(names(igraph::V(g))))}else{
-                                              as.vector(igraph::shortest.paths(g, v = which(names(igraph::V(g)) == target_UP)))},
-                    shortest.path_acquir_to_target = if(sum(names(igraph::V(g)) == acquir_UP) == 0){rep(Inf, length(names(igraph::V(g))))}else{
-                      rep(igraph::shortest.paths(g, v = which(names(igraph::V(g)) == target_UP))[which(names(igraph::V(g)) == acquir_UP)], length(names(igraph::V(g))))},
-                    stringsAsFactors = FALSE))
-}
-
-pre_centrality <- centrality(pre_Ali_Pairs)
-pos_centrality <- centrality(pos_Ali_Pairs)
-# replace infinite with max value
-pre_centrality$shortest.path.to.acquir[is.infinite(pre_centrality$shortest.path.to.acquir)] <- NA
-pos_centrality$shortest.path.to.acquir[is.infinite(pos_centrality$shortest.path.to.acquir)] <- NA
-pre_centrality$shortest.path.to.target[is.infinite(pre_centrality$shortest.path.to.target)] <- NA
-pos_centrality$shortest.path.to.target[is.infinite(pos_centrality$shortest.path.to.target)] <- NA
-max.value <- max(max(pre_centrality$shortest.path.to.acquir, na.rm = TRUE),
-                 max(pre_centrality$shortest.path.to.target, na.rm = TRUE),
-                 max(pos_centrality$shortest.path.to.acquir, na.rm = TRUE),
-                 max(pos_centrality$shortest.path.to.target, na.rm = TRUE))
-pre_centrality$shortest.path.to.acquir[is.na(pre_centrality$shortest.path.to.acquir)] <- max.value + 1
-pos_centrality$shortest.path.to.acquir[is.na(pos_centrality$shortest.path.to.acquir)] <- max.value + 1
-pre_centrality$shortest.path.to.target[is.na(pre_centrality$shortest.path.to.target)] <- max.value + 1
-pos_centrality$shortest.path.to.target[is.na(pos_centrality$shortest.path.to.target)] <- max.value + 1
-names(pre_centrality)[2:8] <- paste0("pre_", names(pre_centrality)[2:8])
-pre_centrality$pre_shortest.path_acquir_to_target <- max.value + 1
-  
-# delta centrality #
-merged_ <- merge(pre_centrality, pos_centrality, by = "cusipAup")
-merged_$pre_btwness <- regrrr::scale_01(merged_$pre_btwness)
-merged_$btwness <- regrrr::scale_01(merged_$btwness)
-merged_$delta_degree <- merged_$degree - merged_$pre_degree
-merged_$delta_eigen <- merged_$eigen - merged_$pre_eigen
-merged_$delta_btwness <- merged_$btwness - merged_$pre_btwness
-merged_$delta_strhole <- merged_$pre_constraint - merged_$constraint
-merged_$delta_spath2acquir <- merged_$shortest.path.to.acquir - merged_$pre_shortest.path.to.acquir
-merged_$delta_spath2target <- merged_$shortest.path.to.target - merged_$pre_shortest.path.to.target
-
-merged_ <- merged_ %>% dplyr::select(cusipAup, pre_degree, pre_btwness, pre_eigen, pre_constraint,
-                                     delta_degree, delta_eigen, delta_btwness, delta_strhole, 
-                                     shortest.path.to.acquir, pre_shortest.path.to.acquir,
-                                     shortest.path.to.target, pre_shortest.path.to.target,
-                                     delta_spath2acquir, delta_spath2target, pre_shortest.path_acquir_to_target)
-merged_ <- merged_ %>% dplyr::filter(abs(delta_eigen) > 0.001 | abs(delta_btwness) > 0.001 | abs(delta_strhole) > 0.001)
-if(nrow(merged_) > 0){merged_$event_number <- df$event_number}
-
-return(merged_)}
 
 start <- Sys.time()
 # result_list <- purrr::map(1:nrow(impacting.MnAs), safely(add_centrality_change))
 # which(unlist(purrr::map(result_list, function(x) !is.null(x$error))))
 impacting.MnAs_centrality_change <- do.call(rbind, purrr::map(1:nrow(impacting.MnAs), add_centrality_change))
-Sys.time() - start # 3 mins
+Sys.time() - start # 3 hours
 
 Acq_Ali_Merged <- merge(impacting.MnAs_centrality_change, impacting.MnAs, by = "event_number")
 write.csv(Acq_Ali_Merged, "Acq_Ali_Merged.csv", row.names = FALSE)
+
+start <- Sys.time()
+MnA_result_list <- purrr::map(1:nrow(MnA), safely(add_centrality_change))
+which(unlist(purrr::map(MnA_result_list, function(x) !is.null(x$error))))
+# impacting.MnAs_centrality_change <- do.call(rbind, purrr::map(1:nrow(impacting.MnAs), add_centrality_change))
+Sys.time() - start # 3 hours

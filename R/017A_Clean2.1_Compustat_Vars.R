@@ -15,10 +15,10 @@ Acq_Ali_Merged$Target.Flag <- ifelse(Acq_Ali_Merged$target.cusip_UP == Acq_Ali_M
 # write.table(go.to.compustat,"go.to.compustat.txt", col.names = FALSE) # use { =LEFT(RIGHT(A1,9),8) } in excel. set to text, then paste
 # download done ###
 
-compu_info <- read.csv("compustat_11182018.csv", stringsAsFactors = FALSE)
-compu_info <- compu_info %>% dplyr::select(fyear, cusip, at, lt, ni, xrd, sic, state, ipodate)
+compu_info <- read.csv("compustat_11252018.csv", stringsAsFactors = FALSE)
+compu_info <- compu_info %>% dplyr::select(fyear, cusip, at, lt, ni, xrd, ipodate)
 compu_info$cusipAup_10 <- substr(compu_info$cusip, 1, 8)
-# compu_info$age <- compu_info$fyear - as.numeric(substr(compu_info$ipodate, 1, 4))
+compu_info$age <- compu_info$fyear - as.numeric(substr(compu_info$ipodate, 1, 4))
 
 Acq_Ali_Merged <- merge(Acq_Ali_Merged, compu_info, by.x = c("cusipAup_10", "year"), by.y = c("cusipAup_10", "fyear"))
 Acq_Ali_Merged <- Acq_Ali_Merged[-which(duplicated(Acq_Ali_Merged[, c("cusipAup_10", "date_ann")])),]

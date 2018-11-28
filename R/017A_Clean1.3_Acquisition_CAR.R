@@ -1,4 +1,4 @@
-# last run: 11.17.2018
+# last run: 11.25.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))
@@ -26,13 +26,13 @@ print(paste("MnA has", length(unique(MnA$cusipAup)),"unique firms"))
 ## 1.3: download return data #####
 go.to.crsp <- unique(MnA$cusipAup_10) # use this file to download daily stock return
 # write.table(go.to.crsp,"go.to.crsp.txt", col.names = FALSE) # use { =LEFT(RIGHT(A1,9),8) } in excel. set to text, then paste
-# CRSP -> Stock / Security Files -> Daily Stock File -> Date Range {1989-01-01 to 2018-06-30} -> holding period return + return on S&P
+# CRSP -> Stock / Security Files -> Daily Stock File -> Date Range {1989-01-01 to 2018-06-30} -> Cusip + holding period return + return on S&P
 # download done ###
 
 ###### 2 prepare stock price file  ######
 # 2.1 read in stock price file 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
-daily.rt <- fread("stock_price_017A.11182018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
+daily.rt <- fread("stock_price_017A_11252018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
 daily.rt <- daily.rt %>% dplyr::select(PERMNO, date, CUSIP, RET, sprtrn)
  print(paste("daily.rt has",length(unique(daily.rt$CUSIP)),"unique firms"))
   daily.rt$date <- ymd(daily.rt$date)
@@ -43,7 +43,7 @@ s.and.p.rt$date <- ymd(s.and.p.rt$date)
 daily.rt   <- daily.rt[, 2:4] %>% as.data.frame()
 
 # 2.2 add in t.bill cols
-t.bill.rt <- fread("IRX.csv", na.strings = "null")[, c(1,6)] # this is ^IRX : Summary for 13 WEEK TREASURY BILL, from Yahoo Finance
+t.bill.rt <- fread("IRX.csv", na.strings = "null")[, c(1,6)] # this is ^IRX : Summary for 13 WEEK TREASURY BILL, from Yahoo Finance: https://finance.yahoo.com/quote/%5EIRX/history?p=%5EIRX
 t.bill.rt$Date <- ymd(t.bill.rt$Date)
 t.bill.rt$`Adj Close` <- na.locf(t.bill.rt$`Adj Close`)
 t.bill.rt$RET <- c(diff(t.bill.rt$`Adj Close`)/t.bill.rt$`Adj Close`[-length(t.bill.rt$`Adj Close`)], NA)
@@ -146,7 +146,7 @@ run <- purrr::map(event.acquirer.list, safely(get.car)) # got error when private
  bad  <- which(map_lgl(res, is_null))
 result <- do.call(rbind, good)
 car.file <- result[-which(duplicated(result[,3:8])),]
-dim(car.file) # == 9466
+dim(car.file) # == 11089
 if(sum(duplicated(car.file[,1:2]))==0){print("good")}
 Sys.time() - start # 11 mins
 
