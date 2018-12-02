@@ -1,4 +1,4 @@
-# last run: 11.25.2018
+# last run: 11.28.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))
@@ -13,7 +13,8 @@ regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr"
 # names(MnA) <- c("acquirer.cusip", "target.cusip", "date_ann", "date_eff")
 # rm(ACQ_raw)
 
-MnA <- read.csv("Acq_Ali_Merged.csv", stringsAsFactors = FALSE)
+# MnA <- read.csv("Acq_Ali_Merged.csv", stringsAsFactors = FALSE)
+MnA <- read.csv("Acq_Ali_Merged_11282018.csv", stringsAsFactors = FALSE)
 MnA <- MnA %>% filter(year >= 1988, year <= 2017)
 
 ### 1.2 "Convert 6 digit CUSIPs to 8 or 9 digit CUSIPs" http://faq.library.princeton.edu/econ/faq/11206 ####
@@ -26,13 +27,13 @@ print(paste("MnA has", length(unique(MnA$cusipAup)),"unique firms"))
 ## 1.3: download return data #####
 go.to.crsp <- unique(MnA$cusipAup_10) # use this file to download daily stock return
 # write.table(go.to.crsp,"go.to.crsp.txt", col.names = FALSE) # use { =LEFT(RIGHT(A1,9),8) } in excel. set to text, then paste
-# CRSP -> Stock / Security Files -> Daily Stock File -> Date Range {1989-01-01 to 2018-06-30} -> Cusip + holding period return + return on S&P
+# CRSP -> Stock / Security Files -> Daily Stock File -> Date Range {1987-01-01 to 2018-06-30} -> Cusip + holding period return + return on S&P
 # download done ###
 
 ###### 2 prepare stock price file  ######
 # 2.1 read in stock price file 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
-daily.rt <- fread("stock_price_017A_11252018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
+daily.rt <- fread("stock_price_017A_11282018.csv", na.strings = c("","B","C")) # contains sprtrn (return on S&P composite) already
 daily.rt <- daily.rt %>% dplyr::select(PERMNO, date, CUSIP, RET, sprtrn)
  print(paste("daily.rt has",length(unique(daily.rt$CUSIP)),"unique firms"))
   daily.rt$date <- ymd(daily.rt$date)
@@ -146,9 +147,9 @@ run <- purrr::map(event.acquirer.list, safely(get.car)) # got error when private
  bad  <- which(map_lgl(res, is_null))
 result <- do.call(rbind, good)
 car.file <- result[-which(duplicated(result[,3:8])),]
-dim(car.file) # == 11089
+dim(car.file) # == 120,000 +
 if(sum(duplicated(car.file[,1:2]))==0){print("good")}
-Sys.time() - start # 11 mins
+Sys.time() - start # 3.25 hours
 
 # 3.2 matching back
 car.file <- merge(car.file, MnA, by = c("CUSIP", "DATE"))
@@ -157,8 +158,5 @@ car.file <- car.file[-which(duplicated(car.file[,c("CUSIP", "DATE")])),] %>% sel
 ### this is the end ###
 
 car.file$Acquirer.Flag <- ifelse(car.file$acquirer.cusip_UP == car.file$cusipAup, 1, 0)
-summary(lm(window3 ~ (delta_eigen + delta_strhole), data = car.file[which(car.file$Acquirer.Flag == 1),]))
-summary(lm(window3 ~ (delta_eigen + delta_strhole) * Acquirer.Flag, data = car.file))
-summary(lm(window3 ~ (delta_strhole) * Acquirer.Flag, data = car.file))
 
-write.csv(car.file, "car.file.017A.csv", row.names = FALSE)
+write.csv(car.file, "car.file.017A_11282018.csv", row.names = FALSE)

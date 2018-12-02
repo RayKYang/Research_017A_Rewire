@@ -1,4 +1,4 @@
-# last run: 11.27.2018
+# last run: 11.28.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","regrrr"))
@@ -32,7 +32,7 @@ aq_info_experience <- aq_info_experience[-which(duplicated(aq_info_experience[,c
   
 ### 1.3 acquisition intensity ###
 # get Acq_Ali_Merged from 017A_Clean2.2
-get_intensity <- function(row_){
+get_intensity <- function(row_){ # very slow
   # row_ <- 1
   acquirer <- Acq_Ali_Merged[row_, ]$acquirer.cusip_UP
   date_ann <- Acq_Ali_Merged[row_, ]$date_ann
@@ -44,5 +44,7 @@ get_intensity <- function(row_){
 }
 intensity <- do.call(rbind, purrr::map(1:nrow(Acq_Ali_Merged), get_intensity))
 Acq_Ali_Merged <- cbind(Acq_Ali_Merged, intensity[, c(2,3)])
+aq_info_experience$Date..Announced <- as.Date(aq_info_experience$Date..Announced)
+Acq_Ali_Merged$date_ann <- as.Date(Acq_Ali_Merged$date_ann)
 Acq_Ali_Merged_info <- dplyr::inner_join(Acq_Ali_Merged, aq_info_experience, by = c("acquirer.cusip_UP" = "Acquiror..Ultimate...Parent...CUSIP", "date_ann" = "Date..Announced"))
-write.csv(Acq_Ali_Merged_info, "Acq_Ali_Merged_info.csv", row.names = FALSE)
+write.csv(Acq_Ali_Merged_info, "Acq_Ali_Merged_info_11282018.csv", row.names = FALSE)
