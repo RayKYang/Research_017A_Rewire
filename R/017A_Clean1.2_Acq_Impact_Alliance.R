@@ -82,6 +82,8 @@ start <- Sys.time()
 MnA_result_list <- purrr::map(1:nrow(MnA), safely(add_centrality_change_2.2))
 which(unlist(purrr::map(MnA_result_list, function(x) !is.null(x$error))))
 
+which_OK <- which(unlist(purrr::map(MnA_result_list, function(x){is.null(x$error) && ncol(x$result) == 179})))
+
 # add acquisition information
 for(i in which_OK){
   if(!is.null(nrow(MnA_result_list[[i]]$result)) && nrow(MnA_result_list[[i]]$result) > 0){
@@ -94,7 +96,6 @@ for(i in which_OK){
   print(i)
 }
 
-which_OK <- which(unlist(purrr::map(MnA_result_list, function(x){is.null(x$error) && ncol(x$result) == 179})))
 MnA_centrality_change <- do.call(rbind, purrr::map(MnA_result_list[which_OK], function(x) x$result))
 write.csv(MnA_centrality_change, "MnA_centrality_chang_all_11302018.csv", row.names = FALSE)
 Sys.time() - start # 
