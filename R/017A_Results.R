@@ -95,7 +95,7 @@ run <- lm(window5 ~ IMR + experience + # log(Value_of_Transaction) +
                  main1.r = 12, mdrt.r = 13, int1.r = 16, mod.n.sd = 1, xlab = "Acquirer Proximity", ylab = "CAR [-2, +2]", moderator.lab = "Δ Acquirer Status", y.hi.lim=.10, y.low.lim=-.10)
   
   margin = ggplot2::theme(plot.margin = ggplot2::unit(c(0.65,0.65,0.65,0.65), "cm")) 
-  gridExtra::grid.arrange(p1, p2, p3, ncol = 3, grobs = lapply(list(p1, p2, p3), "+", margin))
+  gridExtra::grid.arrange(p1, p2, p3, ncol = 3, grobs = lapply(list(p1, p2, p3), "+", margin))   
   
   # GEE
   # library(geepack) # 
