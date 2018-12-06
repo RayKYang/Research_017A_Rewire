@@ -1,4 +1,4 @@
-
+library(dplyr)
 
 # pre-acquisition
 X1 <- c("A", "A", "A", "A", "A", "B", "B", "B", "E", "B", "C", "C", "C", "D", "D", "D", "E", "F", "F", "G", "I", "I", "J", "L", "L", "M")
@@ -15,7 +15,7 @@ a_ <- c(t(data.frame(X1_, X2_)))
 g_ <- igraph::make_graph(c(t(a_)), directed = F) %>% igraph::simplify()
 plot(g_, vertex.size=15)
 
-A_Ego <- igraph::make_ego_graph(g, order = 1, nodes = "B")[[1]] # 
+A_Ego <- igraph::make_ego_graph(g, order = 1, nodes = "B")[[1]] # igraph::ego(g, 1, "B")
 plot(A_Ego)
 igraph::cohesion(A_Ego)
 
