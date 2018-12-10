@@ -1,4 +1,4 @@
-# last run: 11.25.2018
+# last run: 12.09.2018
 
 # source function first
 # 0.1 run 017A_Clean1.1 1~2.1 to get pair_n_year #####
@@ -55,6 +55,11 @@ cat(scales::percent(sum(pair_year_updated$MnA_adjusted)/2/nrow(pair_year), accur
 rm(pair_year_unaffected)
 rm(updated_blocks)
 rm(pair_year)
+
+##########
+firm_ali_changed <- firm_ali_year %>% filter(changed == 1)
+firm_ali_adjusted <- pair_year_updated %>% filter(MnA_adjusted == TRUE)
+mean(firm_ali_changed$firm %in% c(firm_ali_adjusted$X1, firm_ali_adjusted$X2)) # 39.1%
 
 ################################################
 ### 2.1 Acquisition's Impact on Alliance Network #

@@ -55,6 +55,13 @@ run <- lm(window5 ~ IMR + experience + # log(Value_of_Transaction) +
   H.2 <- update(H.C, . ~ . + (GENERAL_pre_ego_nw_cohesion + R_D_StruHole + Proximity_tA) * Acquirer_delta_eigen)
   reg.2 <- coeftest(H.2, cluster.vcov(H.2, cbind(Data$cusipAup, Data$event_number))) %>% `[`() %>% as.data.frame() %>% add.p.z %>% add.sig %>% dplyr::select(-6) %>% format_reg.table
   
+  # for explaining the sample characteristics
+  # H.2 <- update(H.C, . ~ . + (GENERAL_pre_ego_nw_cohesion + R_D_StruHole + Proximity_tA) * Acquirer_delta_eigen + cusipAup + event_number)
+  # unique(H.2$model$cusipAup) %>% length()
+  # unique(H.2$model$event_number) %>% length()
+  # mean(table(H.2$model$cusipAup) %>% as.integer() > 1)
+  # mean(table(H.2$model$event_number) %>% as.integer() > 1)
+  
   compare <- regrrr::mod.compare(model1 = H.C, model2 = H.1, model3 = H.2)
   combine <- regrrr::reg.combine(tbl_1=reg.C, tbl_2=reg.1, tbl_3=reg.2)
   final <- suppressWarnings(rbind(combine, compare))

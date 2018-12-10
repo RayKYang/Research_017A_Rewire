@@ -1,4 +1,4 @@
-# last run: 11.30.2018
+# last run: 12.09.2018
 
 setwd("/Volumes/RESEARCH_HD/017/raw_data")
 regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr","lubridate","maxLik"))
@@ -7,6 +7,12 @@ regrrr::load.pkgs(c("readr","data.table","xts","tidyr","dplyr","stringr","purrr"
 al_raw <- readxl::read_xls("017Alliance_11052018.xls", skip = 1) %>% as.data.frame()
 names(al_raw) <- stringr::str_replace_all(names(al_raw), "\n", ".")
 names(al_raw) <- stringr::str_replace_all(names(al_raw), "-.| ", ".")
+
+##
+al_raw$year <- as.integer(substr(al_raw$Alliance.Date.Announced, 1, 4))
+al_raw <- al_raw %>% filter(year >= 1991 & year <= 2017)
+mean(al_raw$Expected.Length, na.rm = TRUE)
+##
 
 # al_info <- readxl::read_xlsx("017Alliance_11192018.xlsx", skip = 1) %>% as.data.frame()
 al_info <- readxl::read_xlsx("017Alliance_11272018.xlsx", skip = 1) %>% as.data.frame()
@@ -74,6 +80,22 @@ rm(Al_Nw_splitted)
 rm(pair_year_list)
 rm(pair_year_list_OK)
 rm(Al_Network)
+
+########################################################################
+# Track the change of ultimate parents # for writing the methods section
+firm_ali_year <- data.frame(firm = c(pair_year$X1, pair_year$X2), parent = c(pair_year$X1_UP, pair_year$X2_UP), 
+                            date = c(pair_year$Ali_Ann_Date, pair_year$Ali_Ann_Date), 
+                            deal = c(pair_year$Deal.Number, pair_year$Deal.Number), stringsAsFactors = FALSE)
+
+firm_ali_year$year <- year(firm_ali_year$date)
+firm_ali_year <- firm_ali_year %>% dplyr::filter(year >= 1991 & year <= 2017)
+
+firm_ali_year <- firm_ali_year %>% arrange(date) %>% group_by(firm) %>% 
+                 mutate(changed = length(unique(parent)))
+
+cat(scales::percent(sum(firm_ali_year$firm != firm_ali_year$parent)/nrow(firm_ali_year)))
+cat(scales::percent(sum(firm_ali_year$changed > 1)/nrow(firm_ali_year)))
+cat(scales::percent(sum(firm_ali_year$changed > 1)/sum(firm_ali_year$firm != firm_ali_year$parent)))
 
 ### 2.2 pad n_year rolling data by year #####
 # pair_year_splitted <- split(pair_year, pair_year$year)
