@@ -77,6 +77,11 @@ run <- lm(window5 ~ IMR + experience + # log(Value_of_Transaction) +
   dim(H.2$model)
   regrrr::reg.Vif(H.2$model[,-2])
   
+  # testing the validity of exclusion restriction 
+  cor(H.2$model$IMR, H.2$model$GENERAL_pre_ego_nw_cohesion)
+  cor(H.2$model$IMR, H.2$model$R_D_StruHole)
+  cor(H.2$model$IMR, H.2$model$Proximity_tA)
+  
   var.names <- c("CAR% [-2, +2]", "Acquisition Experience", "Size", "Performance", "Age", "R&D Intensity", "Financial Leverage", "1 = Acquirer Neighbor",
                  "(Pre) Ego Cohesion", "(Pre) R&D Brokerage", 
                  "(Post) Acquirer Proximity",
