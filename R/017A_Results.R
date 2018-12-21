@@ -109,6 +109,22 @@ run <- lm(window5 ~ IMR + experience + # log(Value_of_Transaction) +
   margin = ggplot2::theme(plot.margin = ggplot2::unit(c(0.65,0.65,0.65,0.65), "cm")) 
   gridExtra::grid.arrange(p1, p2, p3, ncol = 3, grobs = lapply(list(p1, p2, p3), "+", margin))   
   
+  # pharma examples
+  Data %>% filter(window5 > 0.05 & GENERAL_pre_ego_nw_cohesion ==2 & GENERAL_pre_shortest.path.to.acquir == 1)
+  # focal partner 375558
+  # acquirer: 110122
+
+  al_raw %>% 
+    filter(stringr::str_detect(Parti..CUSIP, pattern = "375558") == TRUE & year <= 2008 & year >= 2003) %>% select(Parti..CUSIP, Deal.Text)
+  al_raw %>% 
+    filter(stringr::str_detect(Parti..CUSIP, pattern = "589331") == TRUE & year < 2008 & year > 2003) %>% select(Parti..CUSIP, Deal.Text)
+  
+  al_raw %>% 
+    filter(stringr::str_detect(Parti..CUSIP, pattern = "110122") == TRUE & year < 2008 & year > 2003 & Status != "Pending") %>% select(Parti..CUSIP, Deal.Text)
+  
+  ACQ_raw %>% 
+    filter(Acquiror..CUSIP == "110122" & Date.Announced == as.Date("2007-09-24"))
+  
   # GEE
   # library(geepack) # 
   # gee.00  <- geeglm(window5 ~ IMR + experience + log(at + 1) + I(ni/at) + age + I(log(xrd/at + 1)) + I(lt/at), data=Data, id=cusipAup, waves = event_number, corstr = "independence")

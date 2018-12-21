@@ -56,10 +56,10 @@ rm(pair_year_unaffected)
 rm(updated_blocks)
 rm(pair_year)
 
-##########
-firm_ali_changed <- firm_ali_year %>% filter(changed == 1)
-firm_ali_adjusted <- pair_year_updated %>% filter(MnA_adjusted == TRUE)
-mean(firm_ali_changed$firm %in% c(firm_ali_adjusted$X1, firm_ali_adjusted$X2)) # 39.1%
+# ########## for writing method section ###
+# firm_ali_changed <- firm_ali_year %>% filter(changed == 1)
+# firm_ali_adjusted <- pair_year_updated %>% filter(MnA_adjusted == TRUE)
+# mean(firm_ali_changed$firm %in% c(firm_ali_adjusted$X1, firm_ali_adjusted$X2)) # 39.1%
 
 ################################################
 ### 2.1 Acquisition's Impact on Alliance Network #
